@@ -845,7 +845,13 @@ a{color:var(--azul)}
 <select id="canio"></select>
 <select id="cdep"><option value="">Todas las dependencias</option></select>
 </div>
+<div class="exportbar">
 <div class="count" id="ccount"></div>
+<div class="exp">
+<button class="btn" onclick="exportCovExcel()">⬇ Exportar Excel</button>
+<button class="btn pdf" onclick="exportCovPDF()">⬇ Exportar PDF</button>
+</div>
+</div>
 <div class="tbl-wrap"><table id="cdet"><thead><tr>
 <th>Año</th><th>Clase</th><th>Dependencia</th><th>Referencia</th><th>Tipo</th><th>Estado</th>
 <th class="rt">Valor</th><th>Proveedor</th><th>Objeto</th><th>SECOP</th></tr></thead><tbody></tbody></table></div>
@@ -907,6 +913,13 @@ if(D.diff){const df=D.diff;
 }
 
 // ---- Cobertura SECOP 2021-2026 (estático, del pipeline) ----
+let covView=[];
+const COV_COLS=['anio','clase','dependencia','referencia_SECOP','tipo_contrato','estado_SECOP','valor_SECOP','proveedor','objeto','fecha_firma','urlproceso'];
+const COV_LB={anio:'Año',clase:'Clase',dependencia:'Dependencia',referencia_SECOP:'Referencia SECOP',tipo_contrato:'Tipo',estado_SECOP:'Estado',valor_SECOP:'Valor',proveedor:'Proveedor',objeto:'Objeto',fecha_firma:'Fecha firma',urlproceso:'Enlace SECOP'};
+function covFiltro(){const p=[],g=id=>document.getElementById(id).value;
+ if(g('cq'))p.push('Búsqueda: "'+g('cq')+'"');if(g('cclase'))p.push('Clase: '+g('cclase'));
+ if(g('canio'))p.push('Año: '+g('canio'));if(g('cdep'))p.push('Dependencia: '+g('cdep'));
+ return p.length?p.join(' · '):'Sin filtros';}
 if(D.coverage){const cov=D.coverage;
  document.getElementById('covcard').style.display='';
  document.getElementById('covnota').innerHTML='SECOP II · '+esc(cov.rango)+' · generado '+esc(cov.generado.slice(0,10))+'. '+esc(cov.nota);
@@ -926,6 +939,7 @@ if(D.coverage){const cov=D.coverage;
   const cl=document.getElementById('cclase').value,an=document.getElementById('canio').value,dp=document.getElementById('cdep').value;
   const f=nv.filter(x=>{if(cl&&x.clase!==cl)return false;if(an&&x.anio!==an)return false;if(dp&&x.dependencia!==dp)return false;
    if(q){const b=[x.referencia_SECOP,x.objeto,x.proveedor,x.tipo_contrato].join(' ').toLowerCase();if(!b.includes(q))return false;}return true;});
+  covView=f;
   document.querySelector('#cdet tbody').innerHTML=f.map(x=>`<tr>
    <td>${esc(x.anio)}</td><td>${esc(x.clase)}</td><td>${esc(x.dependencia)}</td>
    <td class="mono">${esc(x.referencia_SECOP)}</td><td>${esc(x.tipo_contrato)}</td><td>${esc(x.estado_SECOP)}</td>
@@ -1201,6 +1215,33 @@ function exportPDF(){const obs=rows.map(r=>r.o);
  obs.forEach(o=>{h+=`<div class="obra"><h3>${esc(o.nombre_obra||('Obra '+o.oid))}</h3><table>`+
    ORD.map(k=>{const v=o[k];if(v==null||v==='')return '';return `<tr><td class="k">${esc(LB[k]||k)}</td><td>${val(k,v)}</td></tr>`;}).join('')+`</table></div>`;});
  h+=`<p class="meta">Fuente: valletransparente.valledelcauca.gov.co (API pública).</p></body></html>`;
+ const w=window.open('','_blank');if(!w){alert('Permite las ventanas emergentes para exportar el PDF.');return;}
+ w.document.write(h);w.document.close();w.focus();setTimeout(()=>w.print(),500);}
+
+// ---- Exportaciones de la sección Cobertura SECOP (respetan sus filtros) ----
+function exportCovExcel(){const vw=covView;if(!vw.length){alert('No hay filas para exportar.');return;}
+ const numlike=v=>v!=null&&v!==''&&/^-?\d+(\.\d+)?$/.test(String(v).trim());
+ const headers=COV_COLS.map(k=>COV_LB[k]);
+ const data=vw.map(x=>COV_COLS.map(k=>{const v=x[k];return numlike(v)?parseFloat(v):(v==null?'':v);}));
+ dl(buildXlsx(headers,data),'SECOP_no_en_VT_'+(D.coverage?D.coverage.rango:'')+'_('+vw.length+').xlsx');}
+function exportCovPDF(){const vw=covView;if(!vw.length){alert('No hay filas para exportar.');return;}
+ const money2=v=>{const n=parseFloat(v);return isNaN(n)?esc(v):'$'+Math.round(n).toLocaleString('es-CO')};
+ let h=`<!doctype html><html><head><meta charset="utf-8"><title>SECOP no publicadas en VT</title><style>
+  body{font-family:Arial,sans-serif;color:#1c2530;margin:20px;font-size:11px}
+  h1{color:#1F4E78;font-size:18px;margin:0 0 4px}.meta{color:#667;font-size:11px;margin:0 0 4px}
+  .filtro{background:#eef3f8;border-left:4px solid #2E7D32;padding:7px 11px;border-radius:6px;margin:9px 0}
+  table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #d8e0e8;padding:4px 6px;vertical-align:top;text-align:left}
+  th{background:#1F4E78;color:#fff;font-size:10px}td{font-size:10px}a{color:#1F4E78}
+  tr{page-break-inside:avoid}</style></head><body>
+  <h1>Obras en SECOP no publicadas en Valle Transparente</h1>
+  <p class="meta">Gobernación del Valle · ${esc(D.coverage?D.coverage.rango:'')} · ${vw.length} contrato(s) · generado ${esc(D.coverage?D.coverage.generado.slice(0,10):'')}</p>
+  <div class="filtro"><b>Filtros:</b> ${esc(covFiltro())}</div>
+  <table><thead><tr><th>Año</th><th>Clase</th><th>Dependencia</th><th>Referencia</th><th>Tipo</th><th>Estado</th><th>Valor</th><th>Proveedor</th><th>Objeto</th><th>SECOP</th></tr></thead><tbody>`;
+ vw.forEach(x=>{h+=`<tr><td>${esc(x.anio)}</td><td>${esc(x.clase)}</td><td>${esc(x.dependencia)}</td>
+  <td>${esc(x.referencia_SECOP)}</td><td>${esc(x.tipo_contrato)}</td><td>${esc(x.estado_SECOP)}</td>
+  <td style="text-align:right">${money2(x.valor_SECOP)}</td><td>${esc(x.proveedor)}</td>
+  <td>${esc(x.objeto)}</td><td>${x.urlproceso&&isUrl(x.urlproceso)?'<a href="'+esc(String(x.urlproceso).trim())+'">ver</a>':''}</td></tr>`;});
+ h+=`</tbody></table><p class="meta">Fuente: SECOP II (datos.gov.co) cruzado con Valle Transparente.</p></body></html>`;
  const w=window.open('','_blank');if(!w){alert('Permite las ventanas emergentes para exportar el PDF.');return;}
  w.document.write(h);w.document.close();w.focus();setTimeout(()=>w.print(),500);}
 
