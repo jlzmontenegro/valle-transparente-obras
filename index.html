@@ -793,6 +793,7 @@ a{color:var(--azul)}
 </div>
 <div class="fgroup fyears"><span class="flbl">Año(s) de firma</span><div class="years" id="years"></div></div>
 <div class="fgroup factions">
+<label class="chk" title="Obras marcadas 'Precontractual' pero con firma/contratista/avance"><input type="checkbox" id="f-incons"> <span style="color:#C0392B">⚠</span> Solo inconsistencia de estado</label>
 <label class="chk"><input type="checkbox" id="f-group"> Agrupar por contrato</label>
 <button class="btn ghost" onclick="limpiar()">Limpiar filtros</button>
 </div>
@@ -1050,7 +1051,7 @@ function renderFilters(){
 }
 function limpiar(){document.getElementById('q').value='';['f-estado','f-dep','f-mun','f-desde','f-hasta'].forEach(id=>document.getElementById(id).value='');
  selYears.clear();document.querySelectorAll('.ychip').forEach(c=>c.classList.remove('on'));
- document.getElementById('f-group').checked=false;focusContract=null;apply();}
+ document.getElementById('f-group').checked=false;document.getElementById('f-incons').checked=false;focusContract=null;apply();}
 
 // ---- Tabla ----
 const normC=s=>String(s==null?'':s).replace(/[^0-9A-Za-z]/g,'').toUpperCase();
@@ -1060,12 +1061,14 @@ function apply(){
  const q=document.getElementById('q').value.toLowerCase().trim();
  const fe=document.getElementById('f-estado').value,fd=document.getElementById('f-dep').value,fm=document.getElementById('f-mun').value;
  const fdesde=document.getElementById('f-desde').value,fhasta=document.getElementById('f-hasta').value;
+ const fIncons=document.getElementById('f-incons').checked;
  rows=O.map((o,i)=>({o,i})).filter(({o})=>{
   if(focusContract&&normC(o.no_contrato)!==focusContract)return false;
   if(fe&&o.estado_nombre!==fe)return false;
   if(fd&&o.dependencia_nombre!==fd)return false;
   if(fm==='__BAD__'){if(!(o.lat&&o.lng)||okc(o))return false;}
   else if(fm&&o.municipio_nombre!==fm)return false;
+  if(fIncons&&!incons(o))return false;
   if(selYears.size){const y=yValid(o.fecha_firma)?o.fecha_firma.slice(0,4):null;if(!y||!selYears.has(y))return false;}
   if(fdesde||fhasta){const f=yValid(o.fecha_firma)?o.fecha_firma.slice(0,10):null;if(!f)return false;
     if(fdesde&&f<fdesde)return false;if(fhasta&&f>fhasta)return false;}
@@ -1164,6 +1167,7 @@ function closeM(){document.getElementById('ov').classList.remove('open')}
 document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(!k)return;if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=1;}apply();});
 ['q','f-estado','f-dep','f-mun','f-desde','f-hasta'].forEach(id=>document.getElementById(id).addEventListener('input',apply));
 document.getElementById('f-group').addEventListener('change',apply);
+document.getElementById('f-incons').addEventListener('change',apply);
 document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeM()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
 
