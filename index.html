@@ -702,12 +702,17 @@ h2{color:var(--azul);margin:0 0 10px;font-size:18px}
 .dot{width:12px;height:12px;border-radius:50%;border:1px solid #0003}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px}
 .filters input,.filters select{padding:9px 11px;border:1px solid #ccd4de;border-radius:8px;font-size:14px;width:100%;background:#fff}
-.filters2{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:10px}
-.filters2 label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
-.filters2 input[type=date]{padding:8px 10px;border:1px solid #ccd4de;border-radius:8px;font-size:14px}
-.years{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filters2{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end;margin-bottom:12px}
+.fgroup{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.filters2 .fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+.filters2 input[type=date]{padding:8px 10px;border:1px solid #ccd4de;border-radius:8px;font-size:14px;width:150px;max-width:100%}
+.fyears{flex-direction:column;align-items:flex-start;gap:5px}
+.flbl{font-size:12px;color:var(--mut)}
+.years{display:flex;flex-wrap:wrap;gap:6px}
 .ychip{padding:5px 11px;border:1px solid #ccd4de;border-radius:16px;background:#fff;cursor:pointer;font-size:13px;user-select:none}
 .ychip.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+.factions{margin-left:auto;align-items:center;gap:14px}
+@media(max-width:760px){.factions{margin-left:0}}
 .exportbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .exp{display:flex;gap:8px}
 .btn{padding:8px 14px;border:1px solid var(--verde);background:var(--verde);color:#fff;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
@@ -719,8 +724,8 @@ h2{color:var(--azul);margin:0 0 10px;font-size:18px}
 a.lnk{display:inline-block;padding:4px 9px;background:#eef3f8;border:1px solid #cfe0f0;border-radius:7px;color:var(--azul);font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap}
 a.lnk:hover{background:#dcebf8}
 .pts{display:inline-block;background:#fff3e0;color:#b45309;border:1px solid #f0d3a8;border-radius:8px;padding:0 6px;font-size:11px;margin-left:5px;white-space:nowrap}
-.chk{flex-direction:row!important;align-items:center;gap:6px}
-.chk input{width:auto}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);white-space:nowrap;cursor:pointer}
+.chk input{width:auto;cursor:pointer}
 .focusbar{background:#eef3f8;border:1px solid #cfe0f0;border-radius:8px;padding:7px 12px;margin-bottom:8px;font-size:13px;display:none;align-items:center;justify-content:space-between;gap:10px}
 .focusbar.on{display:flex}
 .focusbar button{background:#fff;border:1px solid #ccd4de;border-radius:7px;padding:4px 10px;cursor:pointer;font-size:12px}
@@ -782,11 +787,15 @@ a{color:var(--azul)}
 <select id="f-mun"></select>
 </div>
 <div class="filters2">
-<label>Firma desde<input type="date" id="f-desde"></label>
-<label>Firma hasta<input type="date" id="f-hasta"></label>
-<label style="flex:1">Año(s) de firma<div class="years" id="years"></div></label>
+<div class="fgroup">
+<label class="fld">Firma desde<input type="date" id="f-desde"></label>
+<label class="fld">Firma hasta<input type="date" id="f-hasta"></label>
+</div>
+<div class="fgroup fyears"><span class="flbl">Año(s) de firma</span><div class="years" id="years"></div></div>
+<div class="fgroup factions">
 <label class="chk"><input type="checkbox" id="f-group"> Agrupar por contrato</label>
 <button class="btn ghost" onclick="limpiar()">Limpiar filtros</button>
+</div>
 </div>
 <div class="focusbar" id="focusbar"><span id="focustxt"></span><button onclick="verPuntos(null)">✕ Quitar filtro de contrato</button></div>
 <div class="exportbar">
