@@ -767,25 +767,6 @@ a{color:var(--azul)}
 <main>
 <div class="kpis" id="kpis"></div>
 
-<div class="card" id="pcard"><h2>Período de las obras</h2>
-<div class="periodo" id="periodo"></div>
-<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Rango calculado sobre las obras que cumplen el filtro actual. Algunas obras (precontractuales) aún no tienen fechas.</p></div>
-
-<div class="card" id="chcard" style="display:none"><h2>Cambios entre extracciones</h2>
-<div class="count" id="chsum"></div>
-<div class="tbl-wrap"><table id="chtbl"><thead><tr>
-<th>Cambio</th><th>Obra</th><th>Dependencia</th><th>Municipio</th><th>N° contrato</th>
-<th>Contratista</th><th class="rt">Valor</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
-<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Comparación de la extracción anterior contra la actual (por ID único de obra).</p></div>
-
-<div class="card" id="bccard" style="display:none"><h2>Obras con coordenadas erróneas (fuera de Colombia)</h2>
-<div class="count" id="bcsum"></div>
-<div class="tbl-wrap"><table id="bctbl"><thead><tr>
-<th>Obra</th><th>Municipio</th><th>N° contrato</th><th>Firma</th><th>Inicio</th><th>Fin</th>
-<th>Tipo de error</th><th class="rt">Lat (fuente)</th><th class="rt">Lng (fuente)</th>
-<th class="rt">Lng probable</th><th>SECOP</th></tr></thead><tbody></tbody></table></div>
-<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Estas obras no se dibujan en el mapa porque su longitud está mal digitada en la fuente. La "Lng probable" es la corrección estimada (todas deberían ubicarse en Cali).</p></div>
-
 <div class="card"><h2>Mapa</h2>
 <div class="legend" id="legend"></div>
 <div id="map"></div>
@@ -832,6 +813,17 @@ a{color:var(--azul)}
 <div class="pager" id="pager"></div>
 </div>
 
+<div class="card" id="pcard"><h2>Período de las obras</h2>
+<div class="periodo" id="periodo"></div>
+<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Rango calculado sobre las obras que cumplen el filtro actual. Algunas obras (precontractuales) aún no tienen fechas.</p></div>
+
+<div class="card" id="chcard" style="display:none"><h2>Cambios entre extracciones</h2>
+<div class="count" id="chsum"></div>
+<div class="tbl-wrap"><table id="chtbl"><thead><tr>
+<th>Cambio</th><th>Obra</th><th>Dependencia</th><th>Municipio</th><th>N° contrato</th>
+<th>Contratista</th><th class="rt">Valor</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Comparación de la extracción anterior contra la actual (por ID único de obra).</p></div>
+
 <div class="card" id="covcard" style="display:none">
 <h2>Obras en SECOP no publicadas en Valle Transparente (2021–2026)</h2>
 <p style="font-size:13px;color:var(--mut);margin:0 0 8px" id="covnota"></p>
@@ -855,7 +847,16 @@ a{color:var(--azul)}
 <div class="tbl-wrap"><table id="cdet"><thead><tr>
 <th>Año</th><th>Clase</th><th>Dependencia</th><th>Referencia</th><th>Tipo</th><th>Estado</th>
 <th class="rt">Valor</th><th>Proveedor</th><th>Objeto</th><th>SECOP</th></tr></thead><tbody></tbody></table></div>
+<div class="pager" id="cpager"></div>
 </div>
+
+<div class="card" id="bccard" style="display:none"><h2>Obras con coordenadas erróneas (fuera de Colombia)</h2>
+<div class="count" id="bcsum"></div>
+<div class="tbl-wrap"><table id="bctbl"><thead><tr>
+<th>Obra</th><th>Municipio</th><th>N° contrato</th><th>Firma</th><th>Inicio</th><th>Fin</th>
+<th>Tipo de error</th><th class="rt">Lat (fuente)</th><th class="rt">Lng (fuente)</th>
+<th class="rt">Lng probable</th><th>SECOP</th></tr></thead><tbody></tbody></table></div>
+<p style="font-size:12px;color:var(--mut);margin:8px 0 0">Estas obras no se dibujan en el mapa porque su longitud está mal digitada en la fuente. La "Lng probable" es la corrección estimada (todas deberían ubicarse en Cali).</p></div>
 </main>
 
 <div class="ov" id="ov"><div class="modal">
@@ -934,20 +935,28 @@ if(D.coverage){const cov=D.coverage;
  document.getElementById('canio').innerHTML='<option value="">Todos los años</option>'+
   [...new Set(nv.map(x=>x.anio))].sort().map(a=>`<option>${esc(a)}</option>`).join('');
  [...new Set(nv.map(x=>x.dependencia))].sort().forEach(dp=>{const o=document.createElement('option');o.value=dp;o.textContent=dp;document.getElementById('cdep').appendChild(o);});
+ let cpage=1;const CPS=10;
  function rc(){
   const q=document.getElementById('cq').value.toLowerCase().trim();
   const cl=document.getElementById('cclase').value,an=document.getElementById('canio').value,dp=document.getElementById('cdep').value;
-  const f=nv.filter(x=>{if(cl&&x.clase!==cl)return false;if(an&&x.anio!==an)return false;if(dp&&x.dependencia!==dp)return false;
+  covView=nv.filter(x=>{if(cl&&x.clase!==cl)return false;if(an&&x.anio!==an)return false;if(dp&&x.dependencia!==dp)return false;
    if(q){const b=[x.referencia_SECOP,x.objeto,x.proveedor,x.tipo_contrato].join(' ').toLowerCase();if(!b.includes(q))return false;}return true;});
-  covView=f;
-  document.querySelector('#cdet tbody').innerHTML=f.map(x=>`<tr>
+  cpage=1;covRender();
+ }
+ function covRender(){
+  const tot=covView.length,pages=Math.max(1,Math.ceil(tot/CPS));if(cpage>pages)cpage=pages;
+  const slice=covView.slice((cpage-1)*CPS,cpage*CPS);
+  document.querySelector('#cdet tbody').innerHTML=slice.map(x=>`<tr>
    <td>${esc(x.anio)}</td><td>${esc(x.clase)}</td><td>${esc(x.dependencia)}</td>
    <td class="mono">${esc(x.referencia_SECOP)}</td><td>${esc(x.tipo_contrato)}</td><td>${esc(x.estado_SECOP)}</td>
    <td class="rt">${money(x.valor_SECOP)}</td><td>${esc(x.proveedor)}</td>
    <td>${esc(String(x.objeto||'').slice(0,140))}</td>
    <td>${x.urlproceso&&isUrl(x.urlproceso)?`<a class="lnk" href="${esc(String(x.urlproceso).trim())}" target="_blank" rel="noopener">Ver ↗</a>`:''}</td></tr>`).join('');
-  document.getElementById('ccount').textContent=f.length+' contrato(s)'+(f.length!==nv.length?' (de '+nv.length+')':'');
+  document.getElementById('ccount').textContent=tot+' contrato(s)'+(tot!==nv.length?' (de '+nv.length+')':'');
+  document.getElementById('cpager').innerHTML=`<button onclick="covGo(-1)" ${cpage<=1?'disabled':''}>‹ Anterior</button>`+
+   `<span>Página ${cpage} de ${pages}</span><button onclick="covGo(1)" ${cpage>=pages?'disabled':''}>Siguiente ›</button>`;
  }
+ window.covGo=function(d){cpage+=d;covRender();};
  ['cq','cclase','canio','cdep'].forEach(id=>document.getElementById(id).addEventListener('input',rc));
  rc();
 }
@@ -995,9 +1004,11 @@ function renderBad(){
   <td>${secop(o.enlace)}</td></tr>`).join('');
 }
 function renderMap(){
+ // Dibuja SOLO los puntos que cumplen el filtro actual (rows), para que el mapa
+ // refleje los mismos resultados de la tabla.
  if(!mapOk){document.getElementById('mapnote').textContent='';return;}
  markersLayer.clearLayers();const pts=[],es=new Set();let bad=0;
- O.forEach((o,i)=>{es.add(o.estado_nombre);
+ rows.forEach(({o,i})=>{es.add(o.estado_nombre);
   if(!okc(o)){if(o.lat&&o.lng)bad++;return;}
   pts.push([+o.lat,+o.lng]);
   const mk=L.circleMarker([+o.lat,+o.lng],{radius:6,weight:1,color:'#0004',fillColor:cf(o.estado_nombre),fillOpacity:.85}).addTo(markersLayer);
@@ -1005,7 +1016,8 @@ function renderMap(){
  if(pts.length)map.fitBounds(pts,{padding:[20,20]});
  setTimeout(()=>map.invalidateSize(),150);
  document.getElementById('legend').innerHTML=[...es].map(e=>`<span><i class="dot" style="background:${cf(e)}"></i>${esc(e||'(sin estado)')}</span>`).join('');
- document.getElementById('mapnote').textContent=bad?(bad+' obra(s) no se muestran por tener coordenadas fuera de Colombia (error de captura en la fuente).'):'';
+ const n=pts.length;
+ document.getElementById('mapnote').textContent=(n+' punto(s) en el mapa según el filtro')+(bad?(' · '+bad+' con coordenadas fuera de Colombia no se muestran'):'');
 }
 
 // ---- Filtros ----
@@ -1068,7 +1080,7 @@ function apply(){
  }else grouped=null;
  document.getElementById('focusbar').classList.toggle('on',!!focusContract);
  if(focusContract)document.getElementById('focustxt').innerHTML='Mostrando los <b>'+rows.length+'</b> punto(s) del contrato <b>'+esc(rows[0]?rows[0].o.no_contrato:focusContract)+'</b>';
- page=1;render();
+ page=1;render();renderMap();
 }
 function verPuntos(k){focusContract=k;document.getElementById('f-group').checked=false;apply();
  if(k)window.scrollTo({top:document.querySelector('.tbl-wrap').offsetTop-70,behavior:'smooth'});}
@@ -1147,7 +1159,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
 
 function renderIncons(){const n=O.filter(incons).length;
  document.getElementById('inconsNote').innerHTML=n?('⚠ '+n+' obra(s) con posible <b>inconsistencia de estado</b> (marcadas "Precontractual" pero con firma/contratista/avance). El ⚠ junto al estado las señala.'):'';}
-function renderAll(){computeCounts();renderKPIs();renderBad();renderFilters();renderMap();renderIncons();apply();}
+function renderAll(){computeCounts();renderKPIs();renderBad();renderFilters();renderIncons();apply();}
 
 // ---- Exportaciones (100% offline) ----
 function filtroResumen(){const p=[],g=id=>document.getElementById(id).value;
