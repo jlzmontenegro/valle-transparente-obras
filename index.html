@@ -1088,6 +1088,7 @@ function apply(){
     municipios:[...new Set(pts.map(o=>o.municipio_nombre).filter(Boolean))],
     estados:[...new Set(pts.map(o=>o.estado_nombre).filter(Boolean))],
     enlace:(pts.find(o=>isUrl(o.enlace))||{}).enlace,incons:pts.some(incons),
+    nombres:[...new Set(pts.map(o=>o.nombre_obra).filter(Boolean))],
     pmin:pe.length?Math.min(...pe):null,pmax:pe.length?Math.max(...pe):null};});
   grouped.sort((a,b)=>b.valor-a.valor);
  }else grouped=null;
@@ -1120,8 +1121,9 @@ function render(){
  if(grouped){
   html=slice.map(g=>{const muni=g.municipios.length===1?esc(g.municipios[0]):esc(g.municipios.length+' municipios');
    const rng=g.pmin!=null?(g.pmin===g.pmax?g.pmin+'%':g.pmin+'–'+g.pmax+'%'):'';
-   return `<tr class="grp-row" onclick="verPuntos('${g.k}')" title="Ver los ${g.n} puntos de este contrato">
-   <td><b>${g.n} puntos</b> del contrato</td><td>${esc(g.dependencia)}</td><td>${muni}</td>
+   const nom=g.nombres[0]||'';const extra=g.nombres.length>1?` <span style="color:var(--mut)">(+${g.nombres.length-1} más)</span>`:'';
+   return `<tr class="grp-row" onclick="verPuntos('${g.k}')" title="${esc(g.nombres.join(' · '))}">
+   <td><b>${g.n} puntos</b> · ${esc(nom)}${extra}</td><td>${esc(g.dependencia)}</td><td>${muni}</td>
    <td>${g.estados.map(tag).join(' ')}${g.incons?` <span class="warn" title="${WARNTX}">⚠</span>`:''}</td><td>—</td>
    <td class="rt">${rng}</td><td class="rt"></td><td class="rt"></td><td></td>
    <td class="rt">${money(g.valor)}</td>
